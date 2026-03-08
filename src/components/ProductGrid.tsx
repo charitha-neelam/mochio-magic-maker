@@ -1,85 +1,33 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
 import ProductCard from "@/components/ProductCard";
-import productPhoneCharm from "@/assets/product-phone-charm.jpg";
-import productBracelet from "@/assets/product-bracelet.jpg";
-import productPolaroid from "@/assets/product-polaroid.jpg";
-import productCrochet from "@/assets/product-crochet.jpg";
-
-// Placeholder products — replace with real data when backend is connected
-const products = [
-  {
-    id: 1,
-    name: "Blossom Phone Charm",
-    image: productPhoneCharm,
-    price: 249,
-    originalPrice: 349,
-    category: "Phone Charms",
-    isNew: true,
-  },
-  {
-    id: 2,
-    name: "Dreamy Polaroid Set",
-    image: productPolaroid,
-    price: 199,
-    category: "Custom Polaroids",
-    isNew: true,
-  },
-  {
-    id: 3,
-    name: "Mochi Bunny Crochet",
-    image: productCrochet,
-    price: 399,
-    originalPrice: 499,
-    category: "Crochet",
-    isNew: false,
-  },
-  {
-    id: 4,
-    name: "Dreamy Bracelet Set",
-    image: productBracelet,
-    price: 179,
-    originalPrice: 249,
-    category: "Bracelets",
-    isNew: false,
-  },
-  {
-    id: 5,
-    name: "Sakura Phone Charm",
-    image: productPhoneCharm,
-    price: 199,
-    originalPrice: 299,
-    category: "Phone Charms",
-    isNew: false,
-  },
-  {
-    id: 5,
-    name: "Starlight Polaroid",
-    image: productPolaroid,
-    price: 149,
-    category: "Custom Polaroids",
-    isNew: false,
-  },
-  {
-    id: 6,
-    name: "Baby Bunny Keychain",
-    image: productCrochet,
-    price: 349,
-    originalPrice: 449,
-    category: "Crochet",
-    isNew: true,
-  },
-];
-
-const categories = ["All", "Phone Charms", "Bracelets", "Custom Polaroids", "Crochet"];
+import { supabase } from "@/lib/supabase";
 
 const ProductGrid = () => {
   const [activeCategory, setActiveCategory] = useState("All");
 
+  const { data: products = [], isLoading } = useQuery({
+    queryKey: ["products"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("products")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const categories = [
+    "All",
+    ...Array.from(new Set(products.map((p: any) => p.category))),
+  ];
+
   const filtered =
     activeCategory === "All"
       ? products
-      : products.filter((p) => p.category === activeCategory);
+      : products.filter((p: any) => p.category === activeCategory);
 
   return (
     <section id="shop" className="py-20">
@@ -102,28 +50,50 @@ const ProductGrid = () => {
         </motion.div>
 
         {/* Category filters */}
-        <div className="mb-8 flex flex-wrap items-center justify-center gap-2">
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setActiveCategory(cat)}
-              className={`rounded-full px-5 py-2 text-sm font-medium transition-all ${
-                activeCategory === cat
-                  ? "bg-primary text-primary-foreground shadow-md"
-                  : "bg-secondary text-secondary-foreground hover:bg-primary/20"
-              }`}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
+        {categories.length > 1 && (
+          <div className="mb-8 flex flex-wrap items-center justify-center gap-2">
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setActiveCategory(cat)}
+                className={`rounded-full px-5 py-2 text-sm font-medium transition-all ${
+                  activeCategory === cat
+                    ? "bg-primary text-primary-foreground shadow-md"
+                    : "bg-secondary text-secondary-foreground hover:bg-primary/20"
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Products */}
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((product) => (
-            <ProductCard key={product.id} {...product} />
-          ))}
-        </div>
+        {isLoading ? (
+          <div className="py-16 text-center">
+            <span className="text-4xl">🐰</span>
+            <p className="mt-2 text-muted-foreground">Loading goodies...</p>
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="py-16 text-center">
+            <span className="text-4xl">🌸</span>
+            <p className="mt-2 text-muted-foreground">No products yet — check back soon!</p>
+          </div>
+        ) : (
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {filtered.map((product: any) => (
+              <ProductCard
+                key={product.id}
+                name={product.name}
+                image={product.image_url}
+                price={product.price}
+                originalPrice={product.original_price}
+                category={product.category}
+                isNew={product.is_new}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );
