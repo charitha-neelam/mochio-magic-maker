@@ -27,10 +27,15 @@ const ProductGrid = () => {
     ...Array.from(new Set(products.map((p: any) => p.category))),
   ];
 
-  const filtered =
-    activeCategory === "All"
-      ? products
-      : products.filter((p: any) => p.category === activeCategory);
+  const filtered = products.filter((p: any) => {
+    const matchesCategory = activeCategory === "All" || p.category === activeCategory;
+    const matchesSearch =
+      !searchQuery ||
+      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (p.description && p.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      p.category.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
 
   return (
     <section id="shop" className="py-20">
