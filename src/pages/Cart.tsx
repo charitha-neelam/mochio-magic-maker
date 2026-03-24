@@ -11,9 +11,10 @@ const Cart = () => {
 
   const handleProceedToOrder = () => {
     const orderLines = items.map(
-      (i) => `• ${i.name} (${i.color}) x${i.quantity} — ₹${i.price * i.quantity}`
+      (i) =>
+        `• ${i.name}\n  Colour: ${i.color}\n  Qty: ${i.quantity}\n  Subtotal: ₹${i.price * i.quantity}`
     );
-    const message = `Hi! I'd like to order:\n\n${orderLines.join("\n")}\n\nTotal: ₹${totalPrice}\n\nPlease confirm availability 🙏`;
+    const message = `Hi Mochio! 🐰 I'd like to place an order:\n\n${orderLines.join("\n\n")}\n\n🛒 Total: ₹${totalPrice}\n\nPlease confirm availability and let me know the next steps! 🙏`;
     const encoded = encodeURIComponent(message);
     window.open(`https://ig.me/m/mochio_store?text=${encoded}`, "_blank");
   };

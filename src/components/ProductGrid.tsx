@@ -3,6 +3,8 @@ import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import ProductCard from "@/components/ProductCard";
 import { supabase } from "@/lib/supabase";
+import { Input } from "@/components/ui/input";
+import { Search } from "lucide-react";
 
 const ProductGrid = () => {
   const [activeCategory, setActiveCategory] = useState("All");
