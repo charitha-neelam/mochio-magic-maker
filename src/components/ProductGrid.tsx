@@ -57,6 +57,19 @@ const ProductGrid = () => {
           </p>
         </motion.div>
 
+        {/* Search Bar */}
+        <div className="mx-auto mb-8 max-w-md">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search products..."
+              className="rounded-full pl-10"
+            />
+          </div>
+        </div>
+
         {categories.length > 1 && (
           <div className="mb-8 flex flex-wrap items-center justify-center gap-2">
             {categories.map((cat) => (
