@@ -49,7 +49,6 @@ const ProductGrid = () => {
           </p>
         </motion.div>
 
-        {/* Category filters */}
         {categories.length > 1 && (
           <div className="mb-8 flex flex-wrap items-center justify-center gap-2">
             {categories.map((cat) => (
@@ -68,7 +67,6 @@ const ProductGrid = () => {
           </div>
         )}
 
-        {/* Products */}
         {isLoading ? (
           <div className="py-16 text-center">
             <span className="text-4xl">🐰</span>
@@ -84,6 +82,7 @@ const ProductGrid = () => {
             {filtered.map((product: any) => (
               <ProductCard
                 key={product.id}
+                id={product.id}
                 name={product.name}
                 image={product.image_url}
                 price={product.price}
