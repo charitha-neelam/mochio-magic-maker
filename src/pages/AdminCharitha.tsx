@@ -9,7 +9,7 @@ import { Plus, Trash2, Pencil, ArrowLeft, X } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 
-const CATEGORIES = ["Neckpieces", "Custom Bracelets", "Accessories"];
+const CATEGORIES = ["Phone Charms", "Bracelets", "Neckpieces", "Crochet", "Customized Polaroids", "Accessories"];
 
 interface Product {
   id: string;

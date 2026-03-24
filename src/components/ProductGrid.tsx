@@ -3,9 +3,12 @@ import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import ProductCard from "@/components/ProductCard";
 import { supabase } from "@/lib/supabase";
+import { Input } from "@/components/ui/input";
+import { Search } from "lucide-react";
 
 const ProductGrid = () => {
   const [activeCategory, setActiveCategory] = useState("All");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ["products"],
@@ -24,10 +27,15 @@ const ProductGrid = () => {
     ...Array.from(new Set(products.map((p: any) => p.category))),
   ];
 
-  const filtered =
-    activeCategory === "All"
-      ? products
-      : products.filter((p: any) => p.category === activeCategory);
+  const filtered = products.filter((p: any) => {
+    const matchesCategory = activeCategory === "All" || p.category === activeCategory;
+    const matchesSearch =
+      !searchQuery ||
+      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (p.description && p.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      p.category.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
 
   return (
     <section id="shop" className="py-20">
@@ -48,6 +56,19 @@ const ProductGrid = () => {
             Every piece is lovingly handcrafted. Pick your fave or request a custom one!
           </p>
         </motion.div>
+
+        {/* Search Bar */}
+        <div className="mx-auto mb-8 max-w-md">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search products..."
+              className="rounded-full pl-10"
+            />
+          </div>
+        </div>
 
         {categories.length > 1 && (
           <div className="mb-8 flex flex-wrap items-center justify-center gap-2">
