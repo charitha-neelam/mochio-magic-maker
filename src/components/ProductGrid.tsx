@@ -8,6 +8,7 @@ import { Search } from "lucide-react";
 
 const ProductGrid = () => {
   const [activeCategory, setActiveCategory] = useState("All");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ["products"],
