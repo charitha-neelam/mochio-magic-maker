@@ -5,18 +5,32 @@ import { ArrowLeft, Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { toast } from "sonner";
 
 const Cart = () => {
   const { items, updateQuantity, removeItem, totalPrice, clearCart } = useCart();
 
-  const handleProceedToOrder = () => {
+  const handleProceedToOrder = async () => {
     const orderLines = items.map(
       (i) =>
         `• ${i.name}\n  Colour: ${i.color}\n  Qty: ${i.quantity}\n  Subtotal: ₹${i.price * i.quantity}`
     );
     const message = `Hi Mochio! 🐰 I'd like to place an order:\n\n${orderLines.join("\n\n")}\n\n🛒 Total: ₹${totalPrice}\n\nPlease confirm availability and let me know the next steps! 🙏`;
-    const encoded = encodeURIComponent(message);
-    window.open(`https://ig.me/m/mochio_store?text=${encoded}`, "_blank");
+
+    // Copy to clipboard so the user can paste in IG DM (Instagram strips ?text= params)
+    try {
+      await navigator.clipboard.writeText(message);
+      toast.success("Order copied! Paste it in the Instagram DM 📋", {
+        duration: 4000,
+      });
+    } catch {
+      toast.info("Opening Instagram — please type your order in the DM");
+    }
+
+    // Open Instagram DM directly to @mochio_store
+    setTimeout(() => {
+      window.open("https://ig.me/m/mochio_store", "_blank");
+    }, 400);
   };
 
   return (
