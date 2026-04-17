@@ -10,6 +10,44 @@ import { toast } from "sonner";
 const Cart = () => {
   const { items, updateQuantity, removeItem, totalPrice, clearCart } = useCart();
 
+  const copyToClipboard = async (text: string): Promise<boolean> => {
+    // Modern async API — works on desktop and most modern mobile browsers over HTTPS
+    if (navigator.clipboard && window.isSecureContext) {
+      try {
+        await navigator.clipboard.writeText(text);
+        return true;
+      } catch {
+        // fall through to legacy path
+      }
+    }
+    // Legacy fallback for iOS Safari, in-app browsers, and non-HTTPS contexts
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.setAttribute("readonly", "");
+    textarea.style.position = "fixed";
+    textarea.style.top = "0";
+    textarea.style.left = "0";
+    textarea.style.opacity = "0";
+    textarea.style.pointerEvents = "none";
+    document.body.appendChild(textarea);
+    // iOS needs the element to be contentEditable + non-readonly briefly to allow selection
+    const range = document.createRange();
+    range.selectNodeContents(textarea);
+    const selection = window.getSelection();
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+    textarea.setSelectionRange(0, text.length);
+    let ok = false;
+    try {
+      ok = document.execCommand("copy");
+    } catch {
+      ok = false;
+    }
+    selection?.removeAllRanges();
+    document.body.removeChild(textarea);
+    return ok;
+  };
+
   const handleProceedToOrder = async () => {
     const orderLines = items.map(
       (i) =>
@@ -17,13 +55,13 @@ const Cart = () => {
     );
     const message = `Hi Mochio! 🐰 I'd like to place an order:\n\n${orderLines.join("\n\n")}\n\n🛒 Total: ₹${totalPrice}\n\nPlease confirm availability and let me know the next steps! 🙏`;
 
-    // Copy to clipboard as a fallback — Instagram app often strips ?text= params
-    try {
-      await navigator.clipboard.writeText(message);
-      toast.success("Order ready! If Instagram doesn't pre-fill, just paste 📋", {
+    // Copy synchronously within the user gesture so mobile browsers don't block it
+    const copied = await copyToClipboard(message);
+    if (copied) {
+      toast.success("Order copied! Paste it in the Instagram DM 📋", {
         duration: 4000,
       });
-    } catch {
+    } else {
       toast.info("Opening Instagram — please type your order in the DM");
     }
 
