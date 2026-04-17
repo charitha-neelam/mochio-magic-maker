@@ -17,19 +17,20 @@ const Cart = () => {
     );
     const message = `Hi Mochio! 🐰 I'd like to place an order:\n\n${orderLines.join("\n\n")}\n\n🛒 Total: ₹${totalPrice}\n\nPlease confirm availability and let me know the next steps! 🙏`;
 
-    // Copy to clipboard so the user can paste in IG DM (Instagram strips ?text= params)
+    // Copy to clipboard as a fallback — Instagram app often strips ?text= params
     try {
       await navigator.clipboard.writeText(message);
-      toast.success("Order copied! Paste it in the Instagram DM 📋", {
+      toast.success("Order ready! If Instagram doesn't pre-fill, just paste 📋", {
         duration: 4000,
       });
     } catch {
       toast.info("Opening Instagram — please type your order in the DM");
     }
 
-    // Open Instagram DM directly to @mochio_store
+    // Open Instagram DM to @mochio_store with pre-filled text (works on IG web; mobile app may strip)
+    const encoded = encodeURIComponent(message);
     setTimeout(() => {
-      window.open("https://ig.me/m/mochio_store", "_blank");
+      window.open(`https://ig.me/m/mochio_store?text=${encoded}`, "_blank");
     }, 400);
   };
 
