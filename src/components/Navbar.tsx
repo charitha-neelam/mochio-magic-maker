@@ -20,9 +20,11 @@ const Navbar = () => {
     <nav className="sticky top-0 z-50 border-b border-border bg-background/90 backdrop-blur-md">
       <div className="container mx-auto flex items-center justify-between px-4 py-3">
         <Link to="/" className="flex items-center gap-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-sage text-lg">
-            🐰
-          </div>
+          <img
+            src="/mochio-logo.jpg"
+            alt="Mochio Store"
+            className="h-10 w-10 rounded-full object-cover ring-2 ring-primary/30"
+          />
           <span className="font-display text-xl font-bold text-warm-brown">
             Mochio Store
           </span>

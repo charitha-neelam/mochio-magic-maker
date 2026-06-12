@@ -8,7 +8,11 @@ const Footer = () => {
           {/* Brand */}
           <div>
             <div className="mb-3 flex items-center gap-2">
-              <span className="text-2xl">🐰</span>
+              <img
+                src="/mochio-logo.jpg"
+                alt="Mochio Store"
+                className="h-7 w-7 rounded-full object-cover ring-2 ring-primary/30"
+              />
               <span className="font-display text-lg font-bold text-warm-brown">
                 Mochio Store
               </span>
