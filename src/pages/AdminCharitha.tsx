@@ -298,24 +298,31 @@ const AdminCharitha = () => {
               <Input id="originalPrice" type="number" value={originalPrice} onChange={(e) => setOriginalPrice(e.target.value)} placeholder="349" />
             </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="stock">Stock Quantity</Label>
-              <Input id="stock" type="number" value={stock} onChange={(e) => setStock(e.target.value)} placeholder="10" />
-            </div>
-
-            <div className="space-y-1.5">
+            <div className="space-y-1.5 sm:col-span-2">
               <Label>Colours</Label>
               <div className="flex gap-2">
                 <Input value={colorInput} onChange={(e) => setColorInput(e.target.value)} placeholder="e.g. Pink" onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addColor(); } }} />
                 <Button type="button" variant="outline" size="sm" onClick={addColor} className="shrink-0"><Plus className="h-4 w-4" /></Button>
               </div>
               {colors.length > 0 && (
-                <div className="mt-2 flex flex-wrap gap-1.5">
+                <div className="mt-2 space-y-2">
+                  <p className="text-xs text-muted-foreground">Set stock (pcs) per colour:</p>
                   {colors.map((c) => (
-                    <span key={c} className="inline-flex items-center gap-1 rounded-full bg-secondary px-3 py-1 text-xs font-medium text-secondary-foreground">
-                      {c}
-                      <button type="button" onClick={() => removeColor(c)} className="text-muted-foreground hover:text-destructive"><X className="h-3 w-3" /></button>
-                    </span>
+                    <div key={c} className="flex items-center gap-2 rounded-lg border border-border bg-secondary/30 px-3 py-2">
+                      <span className="flex-1 text-sm font-medium text-foreground">{c}</span>
+                      <Input
+                        type="number"
+                        min="0"
+                        value={colorStock[c] ?? ""}
+                        onChange={(e) => setColorStock((prev) => ({ ...prev, [c]: e.target.value }))}
+                        placeholder="0"
+                        className="h-8 w-24"
+                      />
+                      <span className="text-xs text-muted-foreground">pcs</span>
+                      <button type="button" onClick={() => removeColor(c)} className="text-muted-foreground hover:text-destructive">
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
                   ))}
                 </div>
               )}
