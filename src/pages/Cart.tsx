@@ -1,14 +1,24 @@
 import { Link } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
+import { ArrowLeft, Minus, Plus, Trash2, ShoppingBag, Camera, Copy, Instagram } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { toast } from "sonner";
+import { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
 const Cart = () => {
   const { items, updateQuantity, removeItem, totalPrice, clearCart } = useCart();
+  const [showOrderModal, setShowOrderModal] = useState(false);
+  const [orderMessage, setOrderMessage] = useState("");
 
   const copyToClipboard = async (text: string): Promise<boolean> => {
     // Modern async API — works on desktop and most modern mobile browsers over HTTPS
@@ -48,28 +58,27 @@ const Cart = () => {
     return ok;
   };
 
-  const handleProceedToOrder = async () => {
+  const buildMessage = () => {
     const orderLines = items.map(
       (i) =>
         `• ${i.name}\n  Colour: ${i.color}\n  Qty: ${i.quantity}\n  Subtotal: ₹${i.price * i.quantity}`
     );
-    const message = `Hi Mochio! 🐰 I'd like to place an order:\n\n${orderLines.join("\n\n")}\n\n🛒 Total: ₹${totalPrice}\n\nPlease confirm availability and let me know the next steps! 🙏`;
+    return `Hi Mochio! 🐰 I'd like to place an order:\n\n${orderLines.join("\n\n")}\n\n🛒 Total: ₹${totalPrice}\n\nPlease confirm availability and let me know the next steps! 🙏`;
+  };
 
-    // Copy synchronously within the user gesture so mobile browsers don't block it
-    const copied = await copyToClipboard(message);
-    if (copied) {
-      toast.success("Order copied! Paste it in the Instagram DM 📋", {
-        duration: 4000,
-      });
-    } else {
-      toast.info("Opening Instagram — please type your order in the DM");
-    }
+  const handleProceedToOrder = () => {
+    setOrderMessage(buildMessage());
+    setShowOrderModal(true);
+  };
 
-    // Open Instagram DM to @mochio_store with pre-filled text (works on IG web; mobile app may strip)
-    const encoded = encodeURIComponent(message);
-    setTimeout(() => {
-      window.open(`https://ig.me/m/mochio_store?text=${encoded}`, "_blank");
-    }, 400);
+  const handleCopy = async () => {
+    const ok = await copyToClipboard(orderMessage);
+    if (ok) toast.success("Order details copied! 📋");
+    else toast.error("Couldn't copy — please select and copy manually");
+  };
+
+  const handleOpenInstagram = () => {
+    window.open(`https://ig.me/m/mochio_store`, "_blank");
   };
 
   return (
@@ -168,13 +177,70 @@ const Cart = () => {
                 📩 Proceed to Order via Instagram
               </Button>
               <p className="mt-2 text-center text-xs text-muted-foreground">
-                You'll be redirected to DM @mochio_store with your order details
+                We'll show you how to send your order to @mochio_store
               </p>
             </div>
           </>
         )}
       </div>
       <Footer />
+
+      <Dialog open={showOrderModal} onOpenChange={setShowOrderModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-display text-xl">
+              📩 Almost there! Send your order
+            </DialogTitle>
+            <DialogDescription>
+              Follow these 3 quick steps to place your order with Mochio 🐰
+            </DialogDescription>
+          </DialogHeader>
+
+          <ol className="space-y-3 text-sm">
+            <li className="flex gap-3 rounded-lg bg-secondary/50 p-3">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">1</span>
+              <div>
+                <p className="font-semibold text-foreground flex items-center gap-1.5">
+                  <Camera className="h-4 w-4" /> Take a screenshot
+                </p>
+                <p className="text-xs text-muted-foreground">Screenshot the order summary below so Mochio can see what you want.</p>
+              </div>
+            </li>
+            <li className="flex gap-3 rounded-lg bg-secondary/50 p-3">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">2</span>
+              <div>
+                <p className="font-semibold text-foreground flex items-center gap-1.5">
+                  <Copy className="h-4 w-4" /> Copy your order details
+                </p>
+                <p className="text-xs text-muted-foreground">Tap copy below, then paste it in the DM along with your screenshot.</p>
+              </div>
+            </li>
+            <li className="flex gap-3 rounded-lg bg-secondary/50 p-3">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">3</span>
+              <div>
+                <p className="font-semibold text-foreground flex items-center gap-1.5">
+                  <Instagram className="h-4 w-4" /> Open Instagram & send
+                </p>
+                <p className="text-xs text-muted-foreground">Send the screenshot + pasted message to @mochio_store. Done! 💌</p>
+              </div>
+            </li>
+          </ol>
+
+          <div className="rounded-lg border border-border bg-muted/40 p-3">
+            <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Your order summary</p>
+            <pre className="max-h-40 overflow-auto whitespace-pre-wrap font-sans text-xs text-foreground">{orderMessage}</pre>
+          </div>
+
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button variant="outline" onClick={handleCopy} className="flex-1 gap-2 rounded-full">
+              <Copy className="h-4 w-4" /> Copy details
+            </Button>
+            <Button onClick={handleOpenInstagram} className="flex-1 gap-2 rounded-full">
+              <Instagram className="h-4 w-4" /> Open Instagram
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
