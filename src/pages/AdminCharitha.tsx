@@ -98,7 +98,7 @@ const AdminCharitha = () => {
   const [isNew, setIsNew] = useState(false);
   const [colors, setColors] = useState<string[]>([]);
   const [colorInput, setColorInput] = useState("");
-  const [stock, setStock] = useState("");
+  const [colorStock, setColorStock] = useState<Record<string, string>>({});
 
   const { data: products = [], isLoading } = useQuery<Product[]>({
     queryKey: ["admin-products"],
@@ -119,7 +119,7 @@ const AdminCharitha = () => {
   const resetForm = () => {
     setName(""); setDescription(""); setImageUrl(""); setExtraImages([]); setExtraImageInput("");
     setPrice(""); setOriginalPrice(""); setCategory(CATEGORIES[0]);
-    setIsNew(false); setColors([]); setColorInput(""); setStock(""); setEditingId(null);
+    setIsNew(false); setColors([]); setColorInput(""); setColorStock({}); setEditingId(null);
   };
 
   const fillForm = (p: Product) => {
@@ -133,16 +133,31 @@ const AdminCharitha = () => {
     setCategory(p.category);
     setIsNew(p.is_new);
     setColors(p.colors || []);
-    setStock(p.stock !== null ? String(p.stock) : "");
+    const cs: Record<string, string> = {};
+    (p.colors || []).forEach((c) => {
+      const v = p.color_stock?.[c];
+      cs[c] = v !== undefined && v !== null ? String(v) : "";
+    });
+    setColorStock(cs);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const addColor = () => {
     const c = colorInput.trim();
-    if (c && !colors.includes(c)) setColors([...colors, c]);
+    if (c && !colors.includes(c)) {
+      setColors([...colors, c]);
+      setColorStock((prev) => ({ ...prev, [c]: prev[c] ?? "" }));
+    }
     setColorInput("");
   };
-  const removeColor = (c: string) => setColors(colors.filter((x) => x !== c));
+  const removeColor = (c: string) => {
+    setColors(colors.filter((x) => x !== c));
+    setColorStock((prev) => {
+      const next = { ...prev };
+      delete next[c];
+      return next;
+    });
+  };
 
   const addExtraImage = () => {
     const url = extraImageInput.trim();
@@ -153,6 +168,13 @@ const AdminCharitha = () => {
 
   const saveMutation = useMutation({
     mutationFn: async () => {
+      const cs: Record<string, number> = {};
+      let totalStock = 0;
+      colors.forEach((c) => {
+        const n = Number(colorStock[c] ?? 0);
+        cs[c] = isNaN(n) ? 0 : n;
+        totalStock += cs[c];
+      });
       const payload = {
         name: name.trim(),
         description: description.trim() || null,
@@ -163,7 +185,8 @@ const AdminCharitha = () => {
         category,
         is_new: isNew,
         colors: colors.length > 0 ? colors : null,
-        stock: stock ? Number(stock) : null,
+        color_stock: colors.length > 0 ? cs : {},
+        stock: colors.length > 0 ? totalStock : null,
       };
       if (editingId) {
         const { error } = await supabase.from("products").update(payload).eq("id", editingId);
