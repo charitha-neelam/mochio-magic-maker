@@ -15,6 +15,7 @@ const ProductDetail = () => {
   const { addItem } = useCart();
   const [selectedColor, setSelectedColor] = useState<string>("");
   const [quantity, setQuantity] = useState(1);
+  const [activeImage, setActiveImage] = useState<string>("");
 
   const { data: product, isLoading } = useQuery({
     queryKey: ["product", id],
@@ -33,6 +34,9 @@ const ProductDetail = () => {
   // Set default color once loaded
   if (product && !selectedColor && product.colors?.length > 0) {
     setSelectedColor(product.colors[0]);
+  }
+  if (product && !activeImage) {
+    setActiveImage(product.image_url);
   }
 
   const handleAddToCart = () => {
@@ -95,17 +99,40 @@ const ProductDetail = () => {
         </Link>
 
         <div className="grid gap-8 md:grid-cols-2">
-          {/* Image */}
+          {/* Image gallery */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="overflow-hidden rounded-2xl border border-border bg-card"
+            className="flex flex-col gap-3"
           >
-            <img
-              src={product.image_url}
-              alt={product.name}
-              className="aspect-square w-full object-cover"
-            />
+            <div className="overflow-hidden rounded-2xl border border-border bg-card">
+              <img
+                src={activeImage || product.image_url}
+                alt={product.name}
+                className="aspect-square w-full object-cover"
+              />
+            </div>
+            {(() => {
+              const allImgs = [product.image_url, ...(product.images || [])].filter(Boolean);
+              if (allImgs.length <= 1) return null;
+              return (
+                <div className="flex flex-wrap gap-2">
+                  {allImgs.map((img) => (
+                    <button
+                      key={img}
+                      onClick={() => setActiveImage(img)}
+                      className={`h-16 w-16 overflow-hidden rounded-lg border-2 transition-all ${
+                        (activeImage || product.image_url) === img
+                          ? "border-primary"
+                          : "border-border hover:border-primary/50"
+                      }`}
+                    >
+                      <img src={img} alt="" className="h-full w-full object-cover" />
+                    </button>
+                  ))}
+                </div>
+              );
+            })()}
           </motion.div>
 
           {/* Details */}
