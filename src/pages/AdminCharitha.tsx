@@ -39,6 +39,7 @@ interface Product {
   is_new: boolean;
   colors: string[] | null;
   stock: number | null;
+  color_stock: Record<string, number> | null;
   display_order: number | null;
   created_at: string;
 }
