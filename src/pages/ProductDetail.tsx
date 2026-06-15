@@ -87,6 +87,15 @@ const ProductDetail = () => {
     ? Math.round(((product.original_price - product.price) / product.original_price) * 100)
     : 0;
 
+  const colorStock: Record<string, number> = product.color_stock || {};
+  const hasColors = product.colors && product.colors.length > 0;
+  const selectedColorStock = hasColors
+    ? (selectedColor ? (colorStock[selectedColor] ?? 0) : 0)
+    : (product.stock ?? Infinity);
+  const isOutOfStock = hasColors
+    ? (selectedColor ? selectedColorStock <= 0 : false)
+    : product.stock === 0;
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -191,14 +200,24 @@ const ProductDetail = () => {
                     >
                       {selectedColor === color && <Check className="mr-1 inline h-3 w-3" />}
                       {color}
+                      <span className="ml-1.5 text-[10px] opacity-70">
+                        ({(colorStock[color] ?? 0)} pcs)
+                      </span>
                     </button>
                   ))}
                 </div>
+                {selectedColor && (
+                  <p className={`mt-2 text-xs ${selectedColorStock > 0 ? "text-muted-foreground" : "text-destructive"}`}>
+                    {selectedColorStock > 0
+                      ? `✨ ${selectedColorStock} pcs available in ${selectedColor}`
+                      : `Sold out in ${selectedColor}`}
+                  </p>
+                )}
               </div>
             )}
 
-            {/* Stock */}
-            {product.stock !== null && product.stock !== undefined && (
+            {/* Stock (no-colours fallback) */}
+            {!hasColors && product.stock !== null && product.stock !== undefined && (
               <p className="text-xs text-muted-foreground">
                 {product.stock > 0 ? `${product.stock} in stock` : "Out of stock"}
               </p>
@@ -218,7 +237,8 @@ const ProductDetail = () => {
                   {quantity}
                 </span>
                 <button
-                  onClick={() => setQuantity(quantity + 1)}
+                  onClick={() => setQuantity(Math.min(selectedColorStock || 1, quantity + 1))}
+                  disabled={hasColors && quantity >= selectedColorStock}
                   className="flex h-10 w-10 items-center justify-center rounded-r-full text-muted-foreground transition-colors hover:bg-secondary"
                 >
                   <Plus className="h-4 w-4" />
@@ -229,12 +249,12 @@ const ProductDetail = () => {
             {/* Add to Cart */}
             <Button
               onClick={handleAddToCart}
-              disabled={product.stock === 0}
+              disabled={isOutOfStock}
               className="mt-2 gap-2 rounded-full text-base"
               size="lg"
             >
               <ShoppingBag className="h-5 w-5" />
-              {product.stock === 0 ? "Out of Stock" : "Add to Cart"}
+              {isOutOfStock ? "Out of Stock" : "Add to Cart"}
             </Button>
           </motion.div>
         </div>
