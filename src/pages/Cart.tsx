@@ -21,8 +21,18 @@ const Cart = () => {
   const [orderMessage, setOrderMessage] = useState("");
 
   const copyToClipboard = async (text: string): Promise<boolean> => {
+    // Detect restricted embedding (e.g. Lovable preview iframe) where the
+    // Clipboard API is blocked by Permissions Policy. In that case skip it
+    // entirely to avoid the console violation and go straight to the fallback.
+    let inRestrictedFrame = false;
+    try {
+      inRestrictedFrame = window.self !== window.top;
+    } catch {
+      inRestrictedFrame = true;
+    }
+
     // Modern async API — works on desktop and most modern mobile browsers over HTTPS
-    if (navigator.clipboard && window.isSecureContext) {
+    if (!inRestrictedFrame && navigator.clipboard && window.isSecureContext) {
       try {
         await navigator.clipboard.writeText(text);
         return true;
