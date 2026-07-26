@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Trash2, Pencil, ArrowLeft, X, GripVertical } from "lucide-react";
+import { Plus, Trash2, Pencil, ArrowLeft, X, GripVertical, Upload, Loader2 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import {
@@ -91,7 +91,8 @@ const AdminCharitha = () => {
   const [description, setDescription] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [extraImages, setExtraImages] = useState<string[]>([]);
-  const [extraImageInput, setExtraImageInput] = useState("");
+  const [uploadingMain, setUploadingMain] = useState(false);
+  const [uploadingExtra, setUploadingExtra] = useState(false);
   const [price, setPrice] = useState("");
   const [originalPrice, setOriginalPrice] = useState("");
   const [category, setCategory] = useState(CATEGORIES[0]);
@@ -117,7 +118,7 @@ const AdminCharitha = () => {
   useEffect(() => { setOrdered(products); }, [products]);
 
   const resetForm = () => {
-    setName(""); setDescription(""); setImageUrl(""); setExtraImages([]); setExtraImageInput("");
+    setName(""); setDescription(""); setImageUrl(""); setExtraImages([]);
     setPrice(""); setOriginalPrice(""); setCategory(CATEGORIES[0]);
     setIsNew(false); setColors([]); setColorInput(""); setColorStock({}); setEditingId(null);
   };
@@ -159,12 +160,52 @@ const AdminCharitha = () => {
     });
   };
 
-  const addExtraImage = () => {
-    const url = extraImageInput.trim();
-    if (url && !extraImages.includes(url)) setExtraImages([...extraImages, url]);
-    setExtraImageInput("");
-  };
   const removeExtraImage = (url: string) => setExtraImages(extraImages.filter((x) => x !== url));
+
+  const uploadFile = async (file: File): Promise<string> => {
+    const ext = file.name.split(".").pop() || "jpg";
+    const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const { error } = await supabase.storage.from("product-images").upload(path, file, {
+      cacheControl: "3600",
+      upsert: false,
+      contentType: file.type,
+    });
+    if (error) throw error;
+    const { data } = supabase.storage.from("product-images").getPublicUrl(path);
+    return data.publicUrl;
+  };
+
+  const handleMainUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingMain(true);
+    try {
+      const url = await uploadFile(file);
+      setImageUrl(url);
+      toast({ title: "Main image uploaded! 📸" });
+    } catch (err: any) {
+      toast({ title: "Upload failed", description: err.message, variant: "destructive" });
+    } finally {
+      setUploadingMain(false);
+      e.target.value = "";
+    }
+  };
+
+  const handleExtraUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    setUploadingExtra(true);
+    try {
+      const urls = await Promise.all(files.map((f) => uploadFile(f)));
+      setExtraImages((prev) => [...prev, ...urls.filter((u) => !prev.includes(u))]);
+      toast({ title: `Uploaded ${urls.length} image${urls.length > 1 ? "s" : ""}! 🖼️` });
+    } catch (err: any) {
+      toast({ title: "Upload failed", description: err.message, variant: "destructive" });
+    } finally {
+      setUploadingExtra(false);
+      e.target.value = "";
+    }
+  };
 
   const saveMutation = useMutation({
     mutationFn: async () => {
@@ -329,15 +370,25 @@ const AdminCharitha = () => {
             </div>
 
             <div className="space-y-1.5 sm:col-span-2">
-              <Label htmlFor="imageUrl">Main Image URL *</Label>
-              <Input id="imageUrl" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://example.com/product.jpg" />
+              <Label htmlFor="mainImageFile">Main Image *</Label>
+              <div className="flex items-center gap-2">
+                <label htmlFor="mainImageFile" className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-secondary">
+                  {uploadingMain ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                  {uploadingMain ? "Uploading..." : imageUrl ? "Replace image" : "Upload image"}
+                </label>
+                <input id="mainImageFile" type="file" accept="image/*" className="hidden" onChange={handleMainUpload} disabled={uploadingMain} />
+                {imageUrl && <span className="truncate text-xs text-muted-foreground">Uploaded ✓</span>}
+              </div>
             </div>
 
             <div className="space-y-1.5 sm:col-span-2">
               <Label>Additional Images <span className="text-muted-foreground text-xs">(shown in gallery)</span></Label>
-              <div className="flex gap-2">
-                <Input value={extraImageInput} onChange={(e) => setExtraImageInput(e.target.value)} placeholder="https://example.com/another.jpg" onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addExtraImage(); } }} />
-                <Button type="button" variant="outline" size="sm" onClick={addExtraImage} className="shrink-0"><Plus className="h-4 w-4" /></Button>
+              <div className="flex items-center gap-2">
+                <label htmlFor="extraImagesFile" className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-secondary">
+                  {uploadingExtra ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                  {uploadingExtra ? "Uploading..." : "Upload more images"}
+                </label>
+                <input id="extraImagesFile" type="file" accept="image/*" multiple className="hidden" onChange={handleExtraUpload} disabled={uploadingExtra} />
               </div>
               {extraImages.length > 0 && (
                 <div className="mt-2 flex flex-wrap gap-2">
